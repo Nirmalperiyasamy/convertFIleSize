@@ -3,7 +3,9 @@ package com.hriday.convertFileSize.service;
 import com.hriday.convertFileSize.dao.ArchiveDetails;
 import com.hriday.convertFileSize.dto.ArchiveDetailsDto;
 import com.hriday.convertFileSize.factory.ArchiveService;
+import com.hriday.convertFileSize.globalException.CustomException;
 import com.hriday.convertFileSize.repository.ArchiveRepo;
+import com.hriday.convertFileSize.utils.FileType;
 import org.hriday.archiveFile.ArchiveFile;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Value;
@@ -20,10 +22,8 @@ import java.net.MalformedURLException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Objects;
-import java.util.Timer;
-import java.util.TimerTask;
-import java.util.UUID;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class FileStorageService implements ArchiveService {
@@ -63,7 +63,18 @@ public class FileStorageService implements ArchiveService {
 
         String fileName = StringUtils.cleanPath(Objects.requireNonNull(file.getOriginalFilename()));
 
-        String fileTypeName = fileName.substring(fileName.length() - 3);
+        String[] extension = fileName.split("\\.");
+
+        EnumSet<FileType> fileTypes = EnumSet.allOf(FileType.class);
+        Set<String> stringSet = fileTypes.stream()
+                .map(Enum::name)
+                .collect(Collectors.toSet());
+
+        if (!stringSet.contains(extension[extension.length - 1].toUpperCase())) {
+            throw new CustomException("Enum file not found");
+        }
+
+        FileType fileTypeName = FileType.valueOf(extension[extension.length - 1].toUpperCase());
 
         File tempFile = convertMultipartFileToFile(file);
 
@@ -75,12 +86,13 @@ public class FileStorageService implements ArchiveService {
         File compressedFile = null;
 
         switch (fileTypeName) {
-            case "txt":
+
+            case TXT:
                 compressedFilePath = fileStoragePath + "\\" + compressedFileName + "zip";
                 compressedFile = new File(compressedFilePath);
                 break;
 
-            case "jpg":
+            case JPG:
                 compressedFilePath = fileStoragePath + "\\" + compressedFileName + fileTypeName;
                 compressedFile = new File(compressedFilePath);
                 break;
