@@ -1,5 +1,6 @@
 package com.hriday.convertFileSize.controller;
 
+import com.hriday.convertFileSize.globalException.CustomException;
 import com.hriday.convertFileSize.service.FileStorageService;
 import org.springframework.core.io.Resource;
 import org.springframework.http.ResponseEntity;
@@ -14,8 +15,10 @@ import java.util.Objects;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
+import static com.hriday.convertFileSize.constant.Constants.*;
+
+@RequestMapping(API)
 @RestController
-@RequestMapping
 public class FileController {
 
     private final FileStorageService fileStorageService;
@@ -24,36 +27,33 @@ public class FileController {
         this.fileStorageService = fileStorageService;
     }
 
-    @PostMapping("/compress")
+    @PostMapping(COMPRESS)
     public ResponseEntity<?> fileUpload(@RequestParam("file") MultipartFile file) throws IOException {
 
         String fileName = fileStorageService.compressFile(file);
 
         String url = ServletUriComponentsBuilder.fromCurrentContextPath()
-                .path("/download/")
+                .path("/api/download/")
                 .path(fileName)
                 .toUriString();
 
-        String contentType = file.getContentType();
-
         return ResponseEntity.ok().body(url);
     }
-    @PostMapping("/decompress")
+
+    @PostMapping(DECOMPRESS)
     public ResponseEntity<?> decompress(@RequestParam("file") MultipartFile file) throws IOException {
 
         String fileName = fileStorageService.decompressFile(file);
 
         String url = ServletUriComponentsBuilder.fromCurrentContextPath()
-                .path("/download/")
+                .path("/api/download/")
                 .path(fileName)
                 .toUriString();
-
-        String contentType = file.getContentType();
 
         return ResponseEntity.ok().body(url);
     }
 
-    @GetMapping("/download/{uid}")
+    @GetMapping(DOWNLOAD)
     public ResponseEntity<?> download(@PathVariable String uid, HttpServletResponse response) throws IOException {
 
         Resource resource = fileStorageService.downloadFile(uid);
@@ -71,7 +71,7 @@ public class FileController {
                 zipOutputStream.closeEntry();
 
             } catch (IOException e) {
-                System.out.println("some exception while ziping");
+                throw new CustomException("some exception while ziping");
             }
 
             zipOutputStream.finish();

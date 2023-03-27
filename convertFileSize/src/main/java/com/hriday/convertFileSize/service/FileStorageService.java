@@ -37,9 +37,7 @@ public class FileStorageService implements ArchiveService {
 
     ArchiveFile archiveFile = new ArchiveFile();
 
-    public FileStorageService(ArchiveRepo archiveRepo,
-                              @Value("${file.storage.location1}") String fileStorageLocation,
-                              @Value("${file.storage.location2}") String tempStorageLocation) {
+    public FileStorageService(ArchiveRepo archiveRepo, @Value("${file.storage.location1}") String fileStorageLocation, @Value("${file.storage.location2}") String tempStorageLocation) {
 
 
         this.archiveRepo = archiveRepo;
@@ -66,9 +64,7 @@ public class FileStorageService implements ArchiveService {
         String[] extension = fileName.split("\\.");
 
         EnumSet<FileType> fileTypes = EnumSet.allOf(FileType.class);
-        Set<String> stringSet = fileTypes.stream()
-                .map(Enum::name)
-                .collect(Collectors.toSet());
+        Set<String> stringSet = fileTypes.stream().map(Enum::name).collect(Collectors.toSet());
 
         if (!stringSet.contains(extension[extension.length - 1].toUpperCase())) {
             throw new CustomException("Enum file not found");
@@ -93,7 +89,7 @@ public class FileStorageService implements ArchiveService {
                 break;
 
             case JPG:
-                compressedFilePath = fileStoragePath + "\\" + compressedFileName + fileTypeName;
+                compressedFilePath = fileStoragePath + "\\" + compressedFileName + fileTypeName.toString().toLowerCase();
                 compressedFile = new File(compressedFilePath);
                 break;
         }
