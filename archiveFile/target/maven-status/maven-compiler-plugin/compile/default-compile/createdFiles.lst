@@ -1,0 +1,5 @@
+org\hriday\archiveFile\ArchiveFile.class
+org\hriday\examople\example.class
+org\hriday\Main.class
+org\hriday\archiveImage\ImageCompressor.class
+org\hriday\archiveTxt\TxtCompressor.class
