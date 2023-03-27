@@ -59,8 +59,6 @@ public class ArchiveFile {
 
         zipInputStream.closeEntry();
         zipInputStream.close();
-
-
     }
 
     public static File newFileCreation(File destinationDir, ZipEntry zipEntry) throws IOException {
@@ -68,8 +66,7 @@ public class ArchiveFile {
 
         String destDirPath = destinationDir.getCanonicalPath();
         String destFilePath = destFile.getCanonicalPath();
-        System.out.println(destFilePath);
-        System.out.println(destDirPath);
+
         if (!destFilePath.startsWith(destDirPath + File.separator)) {
             throw new IOException("Entry is outside of the target dir: " + zipEntry.getName());
         }

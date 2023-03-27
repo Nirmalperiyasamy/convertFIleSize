@@ -8,6 +8,7 @@ import com.hriday.convertFileSize.repository.ArchiveRepo;
 import com.hriday.convertFileSize.utils.FileType;
 import org.hriday.archiveFile.ArchiveFile;
 import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
@@ -28,33 +29,16 @@ import java.util.stream.Collectors;
 @Service
 public class FileStorageService implements ArchiveService {
 
+    @Autowired
+    protected ArchiveRepo archiveRepo;
 
-    protected final ArchiveRepo archiveRepo;
-    protected final Path fileStoragePath;
-    protected final String fileStorageLocation;
-    protected final Path tempStoragePath;
-    protected final String tempStorageLocation;
+    @Value("${fileStorage}")
+    protected String fileStoragePath;
+
+    @Value("${tempStorage}")
+    protected String tempStoragePath;
 
     ArchiveFile archiveFile = new ArchiveFile();
-
-    public FileStorageService(ArchiveRepo archiveRepo, @Value("${file.storage.location1}") String fileStorageLocation, @Value("${file.storage.location2}") String tempStorageLocation) {
-
-
-        this.archiveRepo = archiveRepo;
-
-        this.fileStorageLocation = fileStorageLocation;
-        fileStoragePath = Paths.get(fileStorageLocation).toAbsolutePath().normalize();
-
-        this.tempStorageLocation = tempStorageLocation;
-        tempStoragePath = Paths.get(tempStorageLocation).toAbsolutePath().normalize();
-
-        try {
-            Files.createDirectories(fileStoragePath);
-            Files.createDirectories(tempStoragePath);
-        } catch (IOException e) {
-            throw new RuntimeException("Issue in creating file directory");
-        }
-    }
 
     @Override
     public String compressFile(MultipartFile file) throws IOException {
@@ -141,6 +125,7 @@ public class FileStorageService implements ArchiveService {
         String fileName = StringUtils.cleanPath(Objects.requireNonNull(file.getOriginalFilename()));
 
         File tempFile = new File(tempStoragePath + "\\" + fileName);
+
         file.transferTo(tempFile);
 
         scheduleFileDeletion(tempFile, 20 * 1000);
@@ -169,7 +154,7 @@ public class FileStorageService implements ArchiveService {
 
         ArchiveDetails archiveDetails = archiveRepo.findByUid(uid);
 
-        Path path = Paths.get(fileStorageLocation).toAbsolutePath().resolve(archiveDetails.getFileName());
+        Path path = Paths.get(fileStoragePath).toAbsolutePath().resolve(archiveDetails.getFileName());
         Resource resource;
 
         try {
@@ -180,7 +165,6 @@ public class FileStorageService implements ArchiveService {
 
         if (resource.exists() && resource.isReadable()) {
             logAfterDownload(archiveDetails);
-
             return resource;
         } else {
             throw new RuntimeException("the file doesn't exist or not readable");

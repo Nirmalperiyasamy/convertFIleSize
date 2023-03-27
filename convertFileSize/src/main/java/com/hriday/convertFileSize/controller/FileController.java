@@ -2,6 +2,7 @@ package com.hriday.convertFileSize.controller;
 
 import com.hriday.convertFileSize.globalException.CustomException;
 import com.hriday.convertFileSize.service.FileStorageService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.StreamUtils;
@@ -21,11 +22,8 @@ import static com.hriday.convertFileSize.constant.Constants.*;
 @RestController
 public class FileController {
 
-    private final FileStorageService fileStorageService;
-
-    public FileController(FileStorageService fileStorageService) {
-        this.fileStorageService = fileStorageService;
-    }
+    @Autowired
+    protected FileStorageService fileStorageService;
 
     @PostMapping(COMPRESS)
     public ResponseEntity<?> fileUpload(@RequestParam("file") MultipartFile file) throws IOException {

@@ -1,10 +1,5 @@
 server.port: 3000
 
-file:
-  storage:
-    location1: fileStorage
-    location2: tempStorage
-
 spring:
   servlet:
     multipart:
@@ -22,3 +17,6 @@ spring:
   jpa:
     properties.hibernate.dialect: org.hibernate.dialect.MySQL8Dialect
     hibernate.ddl-auto: update
+
+fileStorage : D:\\javaagain\\archiveData\\fileStorage
+tempStorage : D:\\javaagain\\archiveData\\tempStorage
