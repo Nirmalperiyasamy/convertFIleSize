@@ -1,0 +1,24 @@
+server.port: 3000
+
+file:
+  storage:
+    location1: fileStorage
+    location2: tempStorage
+
+spring:
+  servlet:
+    multipart:
+      enabled: true
+      file-size-threshold: 5MB
+      max-file-size: 5MB
+      max-request-size: 20MB
+
+  datasource:
+    url: jdbc:mysql://localhost:3306/archive
+    username: spring
+    password: 1234
+    driverClassName: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    properties.hibernate.dialect: org.hibernate.dialect.MySQL8Dialect
+    hibernate.ddl-auto: update
