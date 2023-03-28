@@ -1,4 +1,4 @@
-package com.hriday.convertFileSize.constant;
+package com.hriday.convertFileSize.paths;
 
 public class Constants {
 

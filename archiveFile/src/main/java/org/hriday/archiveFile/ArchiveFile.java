@@ -11,10 +11,12 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 public class ArchiveFile {
-    public void compress(String sourceFile, File compressFile) throws
+    public void compress(String sourceFile, String compressFile) throws
             IOException {
 
-        switch (sourceFile.substring(sourceFile.length()-3)) {
+        String[] extension = compressFile.split("\\.");
+
+        switch (extension[1]) {
             case "txt":
                 TxtCompressor txtCompressor = new TxtCompressor();
                 txtCompressor.compress(sourceFile, compressFile);
@@ -22,10 +24,11 @@ public class ArchiveFile {
 
             case "jpg":
                 ImageCompressor imageCompressor = new ImageCompressor();
-                imageCompressor.compress(sourceFile,compressFile);
+                imageCompressor.compress(sourceFile, compressFile);
                 break;
         }
-   }
+
+    }
 
     public void decompress(String fileZip, File destinationDirectory) throws IOException {
 

@@ -7,13 +7,12 @@ import java.io.File;
 import java.io.IOException;
 
 public interface ArchiveService {
-    String compressFile(MultipartFile file) throws IOException;
+    String compress(MultipartFile file) throws IOException;
 
-    String decompressFile(MultipartFile file) throws IOException;
+    String decompress(MultipartFile file) throws IOException;
 
     File convertMultipartFileToFile(MultipartFile file) throws IOException;
 
     void scheduleFileDeletion(File file, long delayMillis);
 
-    Resource downloadFile(String fileName) throws IOException;
 }

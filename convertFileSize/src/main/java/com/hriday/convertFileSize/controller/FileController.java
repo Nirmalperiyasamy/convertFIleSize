@@ -16,7 +16,7 @@ import java.util.Objects;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
-import static com.hriday.convertFileSize.constant.Constants.*;
+import static com.hriday.convertFileSize.paths.Constants.*;
 
 @RequestMapping(API)
 @RestController
@@ -28,7 +28,7 @@ public class FileController {
     @PostMapping(COMPRESS)
     public ResponseEntity<?> fileUpload(@RequestParam("file") MultipartFile file) throws IOException {
 
-        String fileName = fileStorageService.compressFile(file);
+        String fileName = fileStorageService.compress(file);
 
         String url = ServletUriComponentsBuilder.fromCurrentContextPath()
                 .path("/api/download/")
@@ -41,7 +41,7 @@ public class FileController {
     @PostMapping(DECOMPRESS)
     public ResponseEntity<?> decompress(@RequestParam("file") MultipartFile file) throws IOException {
 
-        String fileName = fileStorageService.decompressFile(file);
+        String fileName = fileStorageService.decompress(file);
 
         String url = ServletUriComponentsBuilder.fromCurrentContextPath()
                 .path("/api/download/")
@@ -58,7 +58,7 @@ public class FileController {
 
         try (ZipOutputStream zipOutputStream = new ZipOutputStream(response.getOutputStream())) {
 
-            ZipEntry zipEntry = new ZipEntry(Objects.requireNonNull(resource.getFilename()));
+            ZipEntry zipEntry = new ZipEntry((Objects.requireNonNull(resource.getFilename())));
 
             try {
                 zipEntry.setSize(resource.contentLength());
@@ -78,6 +78,6 @@ public class FileController {
             throw new RuntimeException(e);
         }
         return ResponseEntity.ok().body("zip file downloading");
-
     }
 }
+

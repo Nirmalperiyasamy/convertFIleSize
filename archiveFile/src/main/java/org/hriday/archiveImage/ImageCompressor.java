@@ -1,41 +1,46 @@
 package org.hriday.archiveImage;
 
-import javax.imageio.IIOImage;
 import javax.imageio.ImageIO;
-import javax.imageio.ImageWriteParam;
-import javax.imageio.ImageWriter;
-import javax.imageio.stream.ImageOutputStream;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
-import java.util.Iterator;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 public class ImageCompressor {
 
-    public void compress(String sourceFile, File compressFile) throws IOException {
+    public void compress(String sourceFile, String compressFile) throws IOException {
+
+        String[] extension = compressFile.split("\\.");
+        String compress = extension[0] + ".zip";
+
 
         File input = new File(sourceFile);
+        File output = new File("D:\\outputFile\\" + input.getName());
         BufferedImage image = ImageIO.read(input);
+        ImageIO.write(image, "jpg", output);
 
-        OutputStream outputStream = new FileOutputStream(compressFile);
 
-        Iterator<ImageWriter> writers = ImageIO.getImageWritersByFormatName("jpg");
-        ImageWriter writer = writers.next();
+        byte[] buffer = new byte[1024];
 
-        ImageOutputStream ios = ImageIO.createImageOutputStream(outputStream);
-        writer.setOutput(ios);
+        FileInputStream in = new FileInputStream(output);
+        FileOutputStream out = new FileOutputStream(compress);
+        ZipOutputStream zipOut = new ZipOutputStream(out);
 
-        ImageWriteParam param = writer.getDefaultWriteParam();
 
-        param.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
-        param.setCompressionQuality(0.05f);
-        writer.write(null, new IIOImage(image, null, null), param);
+        zipOut.putNextEntry(new ZipEntry(output.getName()));
 
-        outputStream.close();
-        ios.close();
-        writer.dispose();
+        int len;
+        while ((len = in.read(buffer)) > 0) {
+            zipOut.write(buffer, 0, len);
+        }
+
+        in.close();
+        zipOut.closeEntry();
+        zipOut.close();
+
 
     }
 

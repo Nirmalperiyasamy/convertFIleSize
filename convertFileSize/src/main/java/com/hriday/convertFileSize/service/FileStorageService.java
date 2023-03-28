@@ -20,7 +20,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.MalformedURLException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
@@ -41,7 +40,7 @@ public class FileStorageService implements ArchiveService {
     ArchiveFile archiveFile = new ArchiveFile();
 
     @Override
-    public String compressFile(MultipartFile file) throws IOException {
+    public String compress(MultipartFile file) throws IOException {
 
         String fileName = StringUtils.cleanPath(Objects.requireNonNull(file.getOriginalFilename()));
 
@@ -68,17 +67,16 @@ public class FileStorageService implements ArchiveService {
         switch (fileTypeName) {
 
             case TXT:
-                compressedFilePath = fileStoragePath + "\\" + compressedFileName + "zip";
-                compressedFile = new File(compressedFilePath);
-                break;
 
             case JPG:
+
+            case EXE:
                 compressedFilePath = fileStoragePath + "\\" + compressedFileName + fileTypeName.toString().toLowerCase();
                 compressedFile = new File(compressedFilePath);
                 break;
         }
 
-        archiveFile.compress(tempFilePath, compressedFile);
+        archiveFile.compress(tempFilePath, compressedFilePath);
 
         assert compressedFile != null;
         return logsInDatabase(tempFile, compressedFile);
@@ -102,21 +100,21 @@ public class FileStorageService implements ArchiveService {
     }
 
     @Override
-    public String decompressFile(MultipartFile file) throws IOException {
+    public String decompress(MultipartFile file) throws IOException {
 
         File tempFile = convertMultipartFileToFile(file);
 
         String tempFilePath = tempStoragePath + "\\" + tempFile.getName();
 
-        String zipFileName = tempFile.getName().substring(0, tempFile.getName().length() - 3);
+        String zipFileName = tempFile.getName().substring(0, tempFile.getName().length() - 4);
 
-        String decompressedFilepath = String.valueOf(fileStoragePath);
+        String decompressedFilepath = fileStoragePath+"\\"+zipFileName;
 
         File decompressedFile = new File(decompressedFilepath);
 
         archiveFile.decompress(tempFilePath, decompressedFile);
 
-        return zipFileName + "txt";
+        return logsInDatabase(tempFile, decompressedFile);
     }
 
     @Override
@@ -128,7 +126,7 @@ public class FileStorageService implements ArchiveService {
 
         file.transferTo(tempFile);
 
-        scheduleFileDeletion(tempFile, 20 * 1000);
+        scheduleFileDeletion(tempFile, 30 * 1000);
 
         FileOutputStream fos = new FileOutputStream(tempFile);
         fos.write(file.getBytes());
@@ -149,25 +147,27 @@ public class FileStorageService implements ArchiveService {
         timer.schedule(task, delayMillis);
     }
 
-    @Override
+
     public Resource downloadFile(String uid) throws IOException {
 
         ArchiveDetails archiveDetails = archiveRepo.findByUid(uid);
+        String[] extension = archiveDetails.getFileName().split("\\.");
+        String compress = extension[0] + ".zip";
 
-        Path path = Paths.get(fileStoragePath).toAbsolutePath().resolve(archiveDetails.getFileName());
+        Path path = Paths.get(fileStoragePath).toAbsolutePath().resolve(compress);
         Resource resource;
 
         try {
             resource = new UrlResource(path.toUri());
         } catch (MalformedURLException e) {
-            throw new RuntimeException("Issue in reading the file", e);
+            throw new CustomException("Issue in reading the file");
         }
 
         if (resource.exists() && resource.isReadable()) {
             logAfterDownload(archiveDetails);
             return resource;
         } else {
-            throw new RuntimeException("the file doesn't exist or not readable");
+            throw new CustomException("the file doesn't exist or not readable");
         }
     }
 
