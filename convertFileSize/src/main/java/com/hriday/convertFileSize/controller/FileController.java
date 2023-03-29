@@ -1,7 +1,8 @@
 package com.hriday.convertFileSize.controller;
 
-import com.hriday.convertFileSize.globalException.CustomException;
+import com.hriday.convertFileSize.exception.CustomException;
 import com.hriday.convertFileSize.service.FileStorageService;
+import com.hriday.convertFileSize.utils.ErrorMessage;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.http.ResponseEntity;
@@ -26,7 +27,7 @@ public class FileController {
     protected FileStorageService fileStorageService;
 
     @PostMapping(COMPRESS)
-    public ResponseEntity<?> fileUpload( MultipartFile[] file) throws IOException {
+    public ResponseEntity<?> fileUpload(MultipartFile[] file) throws IOException {
 
         String fileName = fileStorageService.compress(file);
 
@@ -39,7 +40,7 @@ public class FileController {
     }
 
     @PostMapping(DECOMPRESS)
-    public ResponseEntity<?> decompress( MultipartFile[] file) throws IOException {
+    public ResponseEntity<?> decompress(MultipartFile[] file) throws IOException {
 
         String fileName = fileStorageService.decompress(file);
 
@@ -56,7 +57,9 @@ public class FileController {
 
         Resource resource = fileStorageService.downloadFile(uid);
 
-        try (ZipOutputStream zipOutputStream = new ZipOutputStream(response.getOutputStream())) {
+        try {
+
+            ZipOutputStream zipOutputStream = new ZipOutputStream(response.getOutputStream());
 
             ZipEntry zipEntry = new ZipEntry((Objects.requireNonNull(resource.getFilename())));
 
@@ -69,7 +72,7 @@ public class FileController {
                 zipOutputStream.closeEntry();
 
             } catch (IOException e) {
-                throw new CustomException("some exception while ziping");
+                throw new CustomException(ErrorMessage.EXCEPTION_ZIP);
             }
 
             zipOutputStream.finish();

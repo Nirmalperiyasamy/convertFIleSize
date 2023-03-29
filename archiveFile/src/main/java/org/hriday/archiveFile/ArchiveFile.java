@@ -1,6 +1,6 @@
 package org.hriday.archiveFile;
 
-import org.hriday.factory.ArchiveMethods;
+import org.hriday.factory.Archive;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -10,27 +10,27 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
-public class ArchiveFile implements ArchiveMethods {
+public class ArchiveFile implements Archive {
 
     @Override
     public void compress(String sourceFile, String compressFile) throws IOException {
 
         String[] extension = compressFile.split("\\.");
-        String compress = extension[0] + ".zip";
+        String fileName = extension[0] + ".zip";
 
         byte[] buffer = new byte[1024];
 
-        FileOutputStream out = new FileOutputStream(compress);
+        FileOutputStream out = new FileOutputStream(fileName);
         ZipOutputStream zipOut = new ZipOutputStream(out);
 
         File folder = new File(sourceFile);
-        for (File multi : folder.listFiles()) {
-            if (!multi.isDirectory()) {
-                FileInputStream fileInputStream = new FileInputStream(multi);
-                zipOut.putNextEntry(new ZipEntry(multi.getName()));
-                int len;
-                while ((len = fileInputStream.read(buffer)) > 0) {
-                    zipOut.write(buffer, 0, len);
+        for (File file : folder.listFiles()) {
+            if (!file.isDirectory()) {
+                FileInputStream fileInputStream = new FileInputStream(file);
+                zipOut.putNextEntry(new ZipEntry(file.getName()));
+                int length;
+                while ((length = fileInputStream.read(buffer)) > 0) {
+                    zipOut.write(buffer, 0, length);
                 }
 
                 fileInputStream.close();
@@ -44,50 +44,34 @@ public class ArchiveFile implements ArchiveMethods {
     }
 
     @Override
-    public void decompress(String fileZip, File destinationDirectory) throws IOException {
+    public void decompress(String fileZip, String unzipFile) throws IOException {
 
+        FileInputStream fis;
         byte[] buffer = new byte[1024];
-
-        ZipInputStream zipInputStream = new ZipInputStream(new FileInputStream(fileZip));
-        ZipEntry zipEntry = zipInputStream.getNextEntry();
-
-        while (zipEntry != null) {
-            File newFile = newFileCreation(destinationDirectory, zipEntry);
-            if (zipEntry.isDirectory()) {
-                if (!newFile.isDirectory() && !newFile.mkdirs()) {
-                    throw new IOException("Failed to create directory " + newFile);
+        try {
+            fis = new FileInputStream(fileZip);
+            ZipInputStream zis = new ZipInputStream(fis);
+            ZipEntry ze = zis.getNextEntry();
+            while (ze != null) {
+                String fileName = ze.getName();
+                File newFile = new File(unzipFile + File.separator + fileName);
+                new File(newFile.getParent()).mkdirs();
+                FileOutputStream fos = new FileOutputStream(newFile);
+                int len;
+                while ((len = zis.read(buffer)) > 0) {
+                    fos.write(buffer, 0, len);
                 }
-            } else {
-                File parent = newFile.getParentFile();
-                if (!parent.isDirectory() && !parent.mkdirs()) {
-                    throw new IOException("Failed to create directory " + parent);
-                }
-
-                FileOutputStream fileOutputStream = new FileOutputStream(newFile);
-                int length;
-                while ((length = zipInputStream.read(buffer)) > 0) {
-                    fileOutputStream.write(buffer, 0, length);
-                }
-                fileOutputStream.close();
+                fos.close();
+                zis.closeEntry();
+                ze = zis.getNextEntry();
             }
-
-            zipEntry = zipInputStream.getNextEntry();
+            zis.closeEntry();
+            zis.close();
+            fis.close();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
 
-        zipInputStream.closeEntry();
-        zipInputStream.close();
     }
 
-    public static File newFileCreation(File destinationDir, ZipEntry zipEntry) throws IOException {
-        File destFile = new File(destinationDir, zipEntry.getName());
-
-        String destDirPath = destinationDir.getCanonicalPath();
-        String destFilePath = destFile.getCanonicalPath();
-
-        if (!destFilePath.startsWith(destDirPath + File.separator)) {
-            throw new IOException("Entry is outside of the target dir: " + zipEntry.getName());
-        }
-
-        return destFile;
-    }
 }

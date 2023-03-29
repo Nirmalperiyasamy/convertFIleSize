@@ -1,6 +1,6 @@
-package com.hriday.convertFileSize.globalException;
+package com.hriday.convertFileSize.exception;
 
-import org.hibernate.annotations.Entity;
+import com.hriday.convertFileSize.utils.ErrorMessage;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -19,6 +19,6 @@ public class GlobalException {
     public ResponseEntity<?> handleMaxSizeException(MaxUploadSizeExceededException exc) {
         return ResponseEntity
                 .status(HttpStatus.EXPECTATION_FAILED)
-                .body("The file size exceeds the maximum allowed limit.");
+                .body(ErrorMessage.MAXIMUM_SIZE);
     }
 }
