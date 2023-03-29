@@ -2,13 +2,11 @@ package org.hriday.archiveFile;
 
 import org.hriday.factory.Archive;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
+
 
 public class ArchiveFile implements Archive {
 
@@ -19,27 +17,32 @@ public class ArchiveFile implements Archive {
         String fileName = extension[0] + ".zip";
 
         byte[] buffer = new byte[1024];
+        try {
+            FileOutputStream out = new FileOutputStream(fileName);
+            ZipOutputStream zipOut = new ZipOutputStream(out);
 
-        FileOutputStream out = new FileOutputStream(fileName);
-        ZipOutputStream zipOut = new ZipOutputStream(out);
+            File folder = new File(sourceFile);
+            for (File file : folder.listFiles()) {
+                if (!file.isDirectory()) {
+                    FileInputStream fileInputStream = new FileInputStream(file);
+                    zipOut.putNextEntry(new ZipEntry(file.getName()));
+                    int length;
+                    while ((length = fileInputStream.read(buffer)) > 0) {
+                        zipOut.write(buffer, 0, length);
+                    }
 
-        File folder = new File(sourceFile);
-        for (File file : folder.listFiles()) {
-            if (!file.isDirectory()) {
-                FileInputStream fileInputStream = new FileInputStream(file);
-                zipOut.putNextEntry(new ZipEntry(file.getName()));
-                int length;
-                while ((length = fileInputStream.read(buffer)) > 0) {
-                    zipOut.write(buffer, 0, length);
+                    fileInputStream.close();
                 }
 
-                fileInputStream.close();
             }
+            zipOut.closeEntry();
+            zipOut.close();
+            out.close();
 
+        } catch (FileNotFoundException e) {
+
+            throw new FileNotFoundException(e.getMessage());
         }
-        zipOut.closeEntry();
-        zipOut.close();
-        out.close();
 
     }
 

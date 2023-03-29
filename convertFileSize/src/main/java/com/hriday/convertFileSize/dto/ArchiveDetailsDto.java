@@ -7,13 +7,12 @@ import lombok.NoArgsConstructor;
 @Data
 @Builder
 public class ArchiveDetailsDto {
+
     private Integer id;
 
     private Long uploadedAt;
 
     private Long downloadedAt;
-
-    private Long compressedSize;
 
     private String fileName;
 
@@ -21,5 +20,5 @@ public class ArchiveDetailsDto {
 
     private String uid;
 
-    private Long uploadedSize;
+
 }

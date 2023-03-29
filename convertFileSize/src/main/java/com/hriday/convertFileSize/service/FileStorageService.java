@@ -40,7 +40,8 @@ public class FileStorageService implements ArchiveService {
     @Value("${tempStorage}")
     public String tempStoragePath;
 
-    ArchiveFile archiveFile = new ArchiveFile();
+    @Autowired
+    protected ArchiveFile archiveFile;
 
     @Override
     public String compress(MultipartFile[] file) throws IOException {
@@ -113,7 +114,7 @@ public class FileStorageService implements ArchiveService {
             file.getName();
             String fileName = StringUtils.cleanPath(Objects.requireNonNull(file.getOriginalFilename()));
 
-            File tempFile = new File(tempFilePath+"\\"+fileName);
+            File tempFile = new File(tempFilePath + "\\" + fileName);
 
             file.transferTo(tempFile);
 

@@ -19,13 +19,10 @@ public class ArchiveDetails {
 
     private Long downloadedAt;
 
-    private Long compressedSize;
-
     private String fileName;
 
     private String status;
 
     private String uid;
 
-    private Long uploadedSize;
 }
