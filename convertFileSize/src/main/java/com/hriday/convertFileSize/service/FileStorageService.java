@@ -34,15 +34,15 @@ public class FileStorageService implements ArchiveService {
     @Value("${fileStorage}")
     protected String fileStoragePath;
 
-    @Value("${tempStorage}")
-    protected String tempStoragePath;
+    //    @Value("${tempStorage}")
+    public String tempStoragePath = "D:\\javaagain\\archiveData\\tempStorage";
 
     ArchiveFile archiveFile = new ArchiveFile();
 
     @Override
-    public String compress(MultipartFile file) throws IOException {
+    public String compress(MultipartFile[] file) throws IOException {
 
-        String fileName = StringUtils.cleanPath(Objects.requireNonNull(file.getOriginalFilename()));
+        String fileName = StringUtils.cleanPath(Objects.requireNonNull(file[0].getOriginalFilename()));
 
         String[] extension = fileName.split("\\.");
 
@@ -55,9 +55,11 @@ public class FileStorageService implements ArchiveService {
 
         FileType fileTypeName = FileType.valueOf(extension[extension.length - 1].toUpperCase());
 
-        File tempFile = convertMultipartFileToFile(file);
+        String tempFilePath = tempStoragePath+"\\"+extension[0];
+        File folder = new File(tempFilePath);
+        folder.mkdir();
 
-        String tempFilePath = tempStoragePath + "\\" + tempFile.getName();
+        File[] files = convertMultipartFileToFile(file, tempFilePath);
 
         String compressedFileName = fileName.substring(0, fileName.length() - 3);
 
@@ -76,10 +78,10 @@ public class FileStorageService implements ArchiveService {
                 break;
         }
 
-        archiveFile.compress(tempFilePath, compressedFilePath);
+        archiveFile.compress(tempFilePath, compressedFilePath, files);
 
         assert compressedFile != null;
-        return logsInDatabase(tempFile, compressedFile);
+        return logsInDatabase(compressedFile, compressedFile);
     }
 
     public String logsInDatabase(File tempFile, File compressedFile) {
@@ -100,39 +102,44 @@ public class FileStorageService implements ArchiveService {
     }
 
     @Override
-    public String decompress(MultipartFile file) throws IOException {
+    public String decompress(MultipartFile[] file) throws IOException {
 
-        File tempFile = convertMultipartFileToFile(file);
+        File[] tempFile = convertMultipartFileToFile(file, "ni");
 
-        String tempFilePath = tempStoragePath + "\\" + tempFile.getName();
+        String tempFilePath = tempStoragePath + "\\" + tempFile[0].getName();
 
-        String zipFileName = tempFile.getName().substring(0, tempFile.getName().length() - 4);
+        String zipFileName = tempFile[0].getName().substring(0, tempFile[0].getName().length() - 4);
 
-        String decompressedFilepath = fileStoragePath+"\\"+zipFileName;
+        String decompressedFilepath = fileStoragePath + "\\" + zipFileName;
 
         File decompressedFile = new File(decompressedFilepath);
 
         archiveFile.decompress(tempFilePath, decompressedFile);
 
-        return logsInDatabase(tempFile, decompressedFile);
+        return logsInDatabase(tempFile[0], decompressedFile);
     }
 
     @Override
-    public File convertMultipartFileToFile(MultipartFile file) throws IOException {
+    public File[] convertMultipartFileToFile(MultipartFile[] multipartFiles, String tempFilePath) throws IOException {
 
-        String fileName = StringUtils.cleanPath(Objects.requireNonNull(file.getOriginalFilename()));
+        File[] files = new File[multipartFiles.length];
+        int i = 0;
+        for (MultipartFile multi : multipartFiles) {
+            String fileName = StringUtils.cleanPath(Objects.requireNonNull(multi.getOriginalFilename()));
+            System.out.println(tempFilePath+"...........");
+            File tempFile = new File(tempFilePath + "\\" + fileName);
+            System.out.println(tempFile.getName()+".............");
+            multi.transferTo(tempFile);
+            files[i++] = tempFile;
 
-        File tempFile = new File(tempStoragePath + "\\" + fileName);
+            scheduleFileDeletion(tempFile, 20 * 1000);
 
-        file.transferTo(tempFile);
+            FileOutputStream fos = new FileOutputStream(tempFile);
+            fos.write(multi.getBytes());
+            fos.close();
 
-        scheduleFileDeletion(tempFile, 30 * 1000);
-
-        FileOutputStream fos = new FileOutputStream(tempFile);
-        fos.write(file.getBytes());
-        fos.close();
-
-        return tempFile;
+        }
+        return files;
     }
 
     @Override
@@ -140,6 +147,7 @@ public class FileStorageService implements ArchiveService {
 
         TimerTask task = new TimerTask() {
             public void run() {
+                System.out.println("deleted");
                 file.delete();
             }
         };

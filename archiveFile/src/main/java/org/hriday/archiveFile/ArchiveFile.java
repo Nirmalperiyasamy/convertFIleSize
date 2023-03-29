@@ -9,26 +9,36 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
+import java.util.zip.ZipOutputStream;
 
 public class ArchiveFile {
-    public void compress(String sourceFile, String compressFile) throws
+    public void compress(String sourceFile, String compressFile, File[] files) throws
             IOException {
 
         String[] extension = compressFile.split("\\.");
+        String compress = extension[0] + ".zip";
 
-        switch (extension[1]) {
-            case "txt":
-                TxtCompressor txtCompressor = new TxtCompressor();
-                txtCompressor.compress(sourceFile, compressFile);
-                break;
+        byte[] buffer = new byte[1024];
 
-            case "jpg":
-                ImageCompressor imageCompressor = new ImageCompressor();
-                imageCompressor.compress(sourceFile, compressFile);
-                break;
+        FileOutputStream out = new FileOutputStream(compress);
+        ZipOutputStream zipOut = new ZipOutputStream(out);
+
+        for (File multi : files) {
+            FileInputStream fileInputStream = new FileInputStream(multi);
+            zipOut.putNextEntry(new ZipEntry(multi.getName()));
+            int len;
+            while ((len = fileInputStream.read(buffer)) > 0) {
+                zipOut.write(buffer, 0, len);
+            }
+
+            fileInputStream.close();
+            zipOut.closeEntry();
         }
 
+        zipOut.close();
+
     }
+
 
     public void decompress(String fileZip, File destinationDirectory) throws IOException {
 

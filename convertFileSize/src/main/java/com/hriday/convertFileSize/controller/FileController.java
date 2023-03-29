@@ -26,7 +26,7 @@ public class FileController {
     protected FileStorageService fileStorageService;
 
     @PostMapping(COMPRESS)
-    public ResponseEntity<?> fileUpload(@RequestParam("file") MultipartFile file) throws IOException {
+    public ResponseEntity<?> fileUpload( MultipartFile[] file) throws IOException {
 
         String fileName = fileStorageService.compress(file);
 
@@ -39,7 +39,7 @@ public class FileController {
     }
 
     @PostMapping(DECOMPRESS)
-    public ResponseEntity<?> decompress(@RequestParam("file") MultipartFile file) throws IOException {
+    public ResponseEntity<?> decompress( MultipartFile[] file) throws IOException {
 
         String fileName = fileStorageService.decompress(file);
 

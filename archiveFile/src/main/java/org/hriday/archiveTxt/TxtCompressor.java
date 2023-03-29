@@ -9,29 +9,28 @@ import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
 public class TxtCompressor {
-    public void compress(String sourceFile, String compressFile) throws IOException {
+    public void compress(String sourceFile, String compressFile,File[] files) throws IOException {
 
         String[] extension = compressFile.split("\\.");
         String compress = extension[0] + ".zip";
 
         byte[] buffer = new byte[1024];
-        File file = new File(sourceFile);
 
-        FileInputStream in = new FileInputStream(file);
         FileOutputStream out = new FileOutputStream(compress);
         ZipOutputStream zipOut = new ZipOutputStream(out);
 
+        for (File multi:files) {
+            FileInputStream fileInputStream = new FileInputStream(multi);
+            zipOut.putNextEntry(new ZipEntry(multi.getName()));
+            int len;
+            while ((len = fileInputStream.read(buffer)) > 0) {
+                zipOut.write(buffer, 0, len);
+            }
 
-        zipOut.putNextEntry(new ZipEntry(file.getName()));
-
-
-        int len;
-        while ((len = in.read(buffer)) > 0) {
-            zipOut.write(buffer, 0, len);
+            fileInputStream.close();
+            zipOut.closeEntry();
         }
 
-        in.close();
-        zipOut.closeEntry();
         zipOut.close();
 
     }
