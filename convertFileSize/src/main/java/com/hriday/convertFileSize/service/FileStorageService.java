@@ -34,8 +34,8 @@ public class FileStorageService implements ArchiveService {
     @Value("${fileStorage}")
     protected String fileStoragePath;
 
-    //    @Value("${tempStorage}")
-    public String tempStoragePath = "D:\\javaagain\\archiveData\\tempStorage";
+    @Value("${tempStorage}")
+    public String tempStoragePath;
 
     ArchiveFile archiveFile = new ArchiveFile();
 
@@ -55,17 +55,16 @@ public class FileStorageService implements ArchiveService {
 
         FileType fileTypeName = FileType.valueOf(extension[extension.length - 1].toUpperCase());
 
-        String tempFilePath = tempStoragePath+"\\"+extension[0];
+        String tempFilePath = tempStoragePath + "\\" + extension[0];
         File folder = new File(tempFilePath);
         folder.mkdir();
 
-        File[] files = convertMultipartFileToFile(file, tempFilePath);
+        convertMultipartFileToFile(file, tempFilePath);
 
         String compressedFileName = fileName.substring(0, fileName.length() - 3);
 
         String compressedFilePath = null;
         File compressedFile = null;
-
         switch (fileTypeName) {
 
             case TXT:
@@ -78,9 +77,8 @@ public class FileStorageService implements ArchiveService {
                 break;
         }
 
-        archiveFile.compress(tempFilePath, compressedFilePath, files);
+        archiveFile.compress(tempFilePath, compressedFilePath);
 
-        assert compressedFile != null;
         return logsInDatabase(compressedFile, compressedFile);
     }
 
@@ -104,33 +102,34 @@ public class FileStorageService implements ArchiveService {
     @Override
     public String decompress(MultipartFile[] file) throws IOException {
 
-        File[] tempFile = convertMultipartFileToFile(file, "ni");
+        String fileName = StringUtils.cleanPath(Objects.requireNonNull(file[0].getOriginalFilename()));
 
-        String tempFilePath = tempStoragePath + "\\" + tempFile[0].getName();
+        String[] extension = fileName.split("\\.");
 
-        String zipFileName = tempFile[0].getName().substring(0, tempFile[0].getName().length() - 4);
+        String tempFilePath = tempStoragePath + "\\" + extension[0];
+        File folder = new File(tempFilePath);
+        folder.mkdir();
 
-        String decompressedFilepath = fileStoragePath + "\\" + zipFileName;
+        convertMultipartFileToFile(file, tempFilePath);
+
+        String decompressedFilepath = fileStoragePath + "\\";
 
         File decompressedFile = new File(decompressedFilepath);
 
         archiveFile.decompress(tempFilePath, decompressedFile);
 
-        return logsInDatabase(tempFile[0], decompressedFile);
+        return "m";
     }
 
     @Override
-    public File[] convertMultipartFileToFile(MultipartFile[] multipartFiles, String tempFilePath) throws IOException {
+    public void convertMultipartFileToFile(MultipartFile[] multipartFiles, String tempFilePath) throws IOException {
 
-        File[] files = new File[multipartFiles.length];
-        int i = 0;
         for (MultipartFile multi : multipartFiles) {
             String fileName = StringUtils.cleanPath(Objects.requireNonNull(multi.getOriginalFilename()));
-            System.out.println(tempFilePath+"...........");
+
             File tempFile = new File(tempFilePath + "\\" + fileName);
-            System.out.println(tempFile.getName()+".............");
+
             multi.transferTo(tempFile);
-            files[i++] = tempFile;
 
             scheduleFileDeletion(tempFile, 20 * 1000);
 
@@ -139,7 +138,6 @@ public class FileStorageService implements ArchiveService {
             fos.close();
 
         }
-        return files;
     }
 
     @Override

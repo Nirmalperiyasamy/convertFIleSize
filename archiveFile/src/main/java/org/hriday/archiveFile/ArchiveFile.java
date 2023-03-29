@@ -1,7 +1,6 @@
 package org.hriday.archiveFile;
 
-import org.hriday.archiveImage.ImageCompressor;
-import org.hriday.archiveTxt.TxtCompressor;
+import org.hriday.factory.ArchiveMethods;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -11,9 +10,10 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
-public class ArchiveFile {
-    public void compress(String sourceFile, String compressFile, File[] files) throws
-            IOException {
+public class ArchiveFile implements ArchiveMethods {
+
+    @Override
+    public void compress(String sourceFile, String compressFile) throws IOException {
 
         String[] extension = compressFile.split("\\.");
         String compress = extension[0] + ".zip";
@@ -23,23 +23,27 @@ public class ArchiveFile {
         FileOutputStream out = new FileOutputStream(compress);
         ZipOutputStream zipOut = new ZipOutputStream(out);
 
-        for (File multi : files) {
-            FileInputStream fileInputStream = new FileInputStream(multi);
-            zipOut.putNextEntry(new ZipEntry(multi.getName()));
-            int len;
-            while ((len = fileInputStream.read(buffer)) > 0) {
-                zipOut.write(buffer, 0, len);
+        File folder = new File(sourceFile);
+        for (File multi : folder.listFiles()) {
+            if (!multi.isDirectory()) {
+                FileInputStream fileInputStream = new FileInputStream(multi);
+                zipOut.putNextEntry(new ZipEntry(multi.getName()));
+                int len;
+                while ((len = fileInputStream.read(buffer)) > 0) {
+                    zipOut.write(buffer, 0, len);
+                }
+
+                fileInputStream.close();
             }
 
-            fileInputStream.close();
-            zipOut.closeEntry();
         }
-
+        zipOut.closeEntry();
         zipOut.close();
+        out.close();
 
     }
 
-
+    @Override
     public void decompress(String fileZip, File destinationDirectory) throws IOException {
 
         byte[] buffer = new byte[1024];
