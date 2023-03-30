@@ -10,7 +10,7 @@ import org.springframework.web.multipart.MaxUploadSizeExceededException;
 @ControllerAdvice
 public class GlobalException {
 
-    @ExceptionHandler(value = CustomException.class)
+    @ExceptionHandler(CustomException.class)
     public ResponseEntity<?> handler(CustomException exception) {
         return ResponseEntity.badRequest().body(exception.getMessage());
     }

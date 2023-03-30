@@ -31,7 +31,6 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 @Service
-@EnableScheduling
 public class FileStorageService implements ArchiveService {
 
     @Autowired
@@ -52,10 +51,12 @@ public class FileStorageService implements ArchiveService {
         String fileName = StringUtils.cleanPath(Objects.requireNonNull(file[0].getOriginalFilename()));
 
         String[] fileNameSep = fileName.split("\\.");
-        FileType fileTypeName = FileType.valueOf(fileNameSep[fileNameSep.length - 1].toUpperCase());
-        EnumSet<FileType> fileTypes = EnumSet.allOf(FileType.class);
 
-        if (!fileTypes.contains(fileTypeName)) throw new CustomException(ErrorMessage.TYPE_NOT_FOUND);
+        try {
+            FileType fileTypeName = FileType.valueOf(fileNameSep[fileNameSep.length - 1].toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new CustomException(ErrorMessage.TYPE_NOT_FOUND);
+        }
 
         String tempFilePath = tempStoragePath + File.separator + fileNameSep[0];
         File folder = new File(tempFilePath);
@@ -67,10 +68,10 @@ public class FileStorageService implements ArchiveService {
 
         archiveFile.compress(tempFilePath, compressedFilePath);
 
-        return logsInDatabase(fileNameSep[0]);
+        return logs(fileNameSep[0]);
     }
 
-    public String logsInDatabase(String fileName) {
+    public String logs(String fileName) {
 
         ArchiveDetailsDto archiveDetailsDto = ArchiveDetailsDto
                 .builder()
@@ -105,7 +106,7 @@ public class FileStorageService implements ArchiveService {
         ZipInputStream zis = new ZipInputStream(fileInputStream);
         ZipEntry zipEntry = zis.getNextEntry();
 
-        return logsInDatabase(zipEntry.getName());
+        return logs(zipEntry.getName());
     }
 
     @Override

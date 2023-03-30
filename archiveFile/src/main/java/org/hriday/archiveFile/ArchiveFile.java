@@ -18,10 +18,10 @@ public class ArchiveFile implements Archive {
 
         byte[] buffer = new byte[10000];
 
-        try {
-            FileOutputStream out = new FileOutputStream(fileName);
-            ZipOutputStream zipOut = new ZipOutputStream(out);
+        FileOutputStream out = new FileOutputStream(fileName);
+        ZipOutputStream zipOut = new ZipOutputStream(out);
 
+        try {
             File folder = new File(sourceFile);
             for (File file : folder.listFiles()) {
                 if (!file.isDirectory()) {
@@ -36,16 +36,14 @@ public class ArchiveFile implements Archive {
                 }
 
             }
+
+        } catch (FileNotFoundException e) {
+            throw new FileNotFoundException(e.getMessage());
+        } finally {
             zipOut.closeEntry();
             zipOut.close();
             out.close();
-
-
-        } catch (FileNotFoundException e) {
-
-            throw new FileNotFoundException(e.getMessage());
         }
-
     }
 
     @Override
@@ -53,10 +51,10 @@ public class ArchiveFile implements Archive {
 
         byte[] buffer = new byte[100];
 
+        FileInputStream fileInputStream = new FileInputStream(fileZip);
+        ZipInputStream zipInputStream = new ZipInputStream(fileInputStream);
+        ZipEntry zipEntry = zipInputStream.getNextEntry();
         try {
-            FileInputStream fileInputStream = new FileInputStream(fileZip);
-            ZipInputStream zipInputStream = new ZipInputStream(fileInputStream);
-            ZipEntry zipEntry = zipInputStream.getNextEntry();
             while (zipEntry != null) {
                 String fileName = zipEntry.getName();
                 File newFile = new File(unzipFile + File.separator + fileName);
@@ -70,12 +68,14 @@ public class ArchiveFile implements Archive {
                 zipInputStream.closeEntry();
                 zipEntry = zipInputStream.getNextEntry();
             }
-            zipInputStream.closeEntry();
-            zipInputStream.close();
-            fileInputStream.close();
 
         } catch (IOException e) {
             e.printStackTrace();
+        }
+        finally {
+            zipInputStream.closeEntry();
+            zipInputStream.close();
+            fileInputStream.close();
         }
 
     }

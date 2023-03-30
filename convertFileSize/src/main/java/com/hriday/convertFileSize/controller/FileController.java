@@ -3,6 +3,7 @@ package com.hriday.convertFileSize.controller;
 import com.hriday.convertFileSize.exception.CustomException;
 import com.hriday.convertFileSize.service.FileStorageService;
 import com.hriday.convertFileSize.utils.ErrorMessage;
+import com.hriday.convertFileSize.utils.SuccessMessage;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.http.ResponseEntity;
@@ -58,29 +59,25 @@ public class FileController {
         Resource resource = fileStorageService.downloadFile(uid);
 
         try {
-
             ZipOutputStream zipOutputStream = new ZipOutputStream(response.getOutputStream());
 
             ZipEntry zipEntry = new ZipEntry((Objects.requireNonNull(resource.getFilename())));
 
-            try {
-                zipEntry.setSize(resource.contentLength());
-                zipOutputStream.putNextEntry(zipEntry);
+            zipEntry.setSize(resource.contentLength());
+            zipOutputStream.putNextEntry(zipEntry);
 
-                StreamUtils.copy(resource.getInputStream(), zipOutputStream);
+            StreamUtils.copy(resource.getInputStream(), zipOutputStream);
 
-                zipOutputStream.closeEntry();
-
-            } catch (IOException e) {
-                throw new CustomException(ErrorMessage.EXCEPTION_ZIP);
-            }
+            zipOutputStream.closeEntry();
 
             zipOutputStream.finish();
 
         } catch (IOException e) {
-            throw new RuntimeException(e);
+
+            throw new CustomException(ErrorMessage.EXCEPTION_ZIP);
         }
-        return ResponseEntity.ok().body("zip file downloading");
+
+        return ResponseEntity.ok().body(SuccessMessage.DOWNLOAD_SUCCESS);
     }
 }
 
