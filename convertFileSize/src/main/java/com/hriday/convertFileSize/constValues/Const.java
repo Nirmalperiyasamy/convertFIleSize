@@ -1,6 +1,6 @@
-package com.hriday.convertFileSize.paths;
+package com.hriday.convertFileSize.constValues;
 
-public class Constants {
+public class Const {
 
     public static final String API = "/api";
 
@@ -9,4 +9,6 @@ public class Constants {
     public static final String DECOMPRESS = "/decompress";
 
     public static final String DOWNLOAD = "/download/{uid}";
+
+    public static final String ZIP = ".zip";
 }

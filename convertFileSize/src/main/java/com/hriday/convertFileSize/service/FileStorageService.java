@@ -1,5 +1,6 @@
 package com.hriday.convertFileSize.service;
 
+import com.hriday.convertFileSize.constValues.Const;
 import com.hriday.convertFileSize.dao.ArchiveDetails;
 import com.hriday.convertFileSize.dto.ArchiveDetailsDto;
 import com.hriday.convertFileSize.exception.CustomException;
@@ -14,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
+import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
@@ -29,6 +31,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 @Service
+@EnableScheduling
 public class FileStorageService implements ArchiveService {
 
     @Autowired
@@ -48,25 +51,23 @@ public class FileStorageService implements ArchiveService {
 
         String fileName = StringUtils.cleanPath(Objects.requireNonNull(file[0].getOriginalFilename()));
 
-        String[] extension = fileName.split("\\.");
-        FileType fileTypeName = FileType.valueOf(extension[extension.length - 1].toUpperCase());
+        String[] fileNameSep = fileName.split("\\.");
+        FileType fileTypeName = FileType.valueOf(fileNameSep[fileNameSep.length - 1].toUpperCase());
         EnumSet<FileType> fileTypes = EnumSet.allOf(FileType.class);
 
         if (!fileTypes.contains(fileTypeName)) throw new CustomException(ErrorMessage.TYPE_NOT_FOUND);
 
-        String tempFilePath = tempStoragePath + "\\" + extension[0];
+        String tempFilePath = tempStoragePath + File.separator + fileNameSep[0];
         File folder = new File(tempFilePath);
         folder.mkdir();
 
         convertMultipartFileToFile(file, tempFilePath);
 
-        String compressedFileName = fileName.substring(0, fileName.length() - 3);
-
-        String compressedFilePath = fileStoragePath + "\\" + compressedFileName + fileTypeName.toString().toLowerCase();
+        String compressedFilePath = fileStoragePath + File.separator + fileName;
 
         archiveFile.compress(tempFilePath, compressedFilePath);
 
-        return logsInDatabase(compressedFileName + fileTypeName.toString().toLowerCase());
+        return logsInDatabase(fileNameSep[0]);
     }
 
     public String logsInDatabase(String fileName) {
@@ -92,7 +93,7 @@ public class FileStorageService implements ArchiveService {
 
         String fileName = StringUtils.cleanPath(Objects.requireNonNull(file[0].getOriginalFilename()));
 
-        String tempFilePath = tempStoragePath + "\\" + fileName;
+        String tempFilePath = tempStoragePath + File.separator + fileName;
 
         convertMultipartFileToFile(file, tempFilePath);
 
@@ -114,18 +115,16 @@ public class FileStorageService implements ArchiveService {
             file.getName();
             String fileName = StringUtils.cleanPath(Objects.requireNonNull(file.getOriginalFilename()));
 
-            File tempFile = new File(tempFilePath + "\\" + fileName);
+            File tempFile = new File(tempFilePath + File.separator + fileName);
 
             file.transferTo(tempFile);
 
-            scheduleFileDeletion(tempFile, 200 * 1000);
-
+            scheduleFileDeletion(tempFile, 20 * 1000);
         }
     }
 
     @Override
     public void scheduleFileDeletion(File file, long delayMillis) {
-
         TimerTask task = new TimerTask() {
             public void run() {
                 file.delete();
@@ -139,10 +138,8 @@ public class FileStorageService implements ArchiveService {
     public Resource downloadFile(String uid) throws IOException {
 
         ArchiveDetails archiveDetails = archiveRepo.findByUid(uid);
-        String[] extension = archiveDetails.getFileName().split("\\.");
-        String compress = extension[0] + ".zip";
 
-        Path path = Paths.get(fileStoragePath).toAbsolutePath().resolve(compress);
+        Path path = Paths.get(fileStoragePath).toAbsolutePath().resolve(archiveDetails.getFileName() + Const.ZIP);
         Resource resource;
 
         try {
