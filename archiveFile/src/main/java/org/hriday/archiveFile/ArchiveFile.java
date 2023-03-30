@@ -1,5 +1,6 @@
 package org.hriday.archiveFile;
 
+import org.hriday.archiveFile.constValues.Constants;
 import org.hriday.factory.Archive;
 
 import java.io.*;
@@ -14,7 +15,7 @@ public class ArchiveFile implements Archive {
     public void compress(String sourceFile, String compressFile) throws IOException {
 
         String[] extension = compressFile.split("\\.");
-        String fileName = extension[0] + ".zip";
+        String fileName = extension[0] + Constants.ZIP;
 
         byte[] buffer = new byte[10000];
 
@@ -71,8 +72,7 @@ public class ArchiveFile implements Archive {
 
         } catch (IOException e) {
             e.printStackTrace();
-        }
-        finally {
+        } finally {
             zipInputStream.closeEntry();
             zipInputStream.close();
             fileInputStream.close();

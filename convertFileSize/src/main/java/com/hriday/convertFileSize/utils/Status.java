@@ -4,5 +4,10 @@ public enum Status {
 
     UPLOADED,
 
-    DOWNLOADED
+    DOWNLOADED,
+
+     TEMP_FILE_UPLOADED,
+
+    TEMP_FILE_DELETED;
+
 }

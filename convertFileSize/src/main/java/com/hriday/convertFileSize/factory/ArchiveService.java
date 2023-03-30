@@ -14,6 +14,5 @@ public interface ArchiveService {
 
     void convertMultipartFileToFile(MultipartFile[] multipartFiles, String tempFilePath) throws IOException;
 
-    void scheduleFileDeletion(File file, long delayMillis);
 
 }

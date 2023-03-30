@@ -9,6 +9,7 @@ import com.hriday.convertFileSize.repository.ArchiveRepo;
 import com.hriday.convertFileSize.utils.ErrorMessage;
 import com.hriday.convertFileSize.utils.FileType;
 import com.hriday.convertFileSize.utils.Status;
+import lombok.extern.slf4j.Slf4j;
 import org.hriday.archiveFile.ArchiveFile;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,6 +17,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.scheduling.annotation.EnableScheduling;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
@@ -24,6 +26,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
@@ -31,6 +34,8 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 @Service
+@Slf4j
+@EnableScheduling
 public class FileStorageService implements ArchiveService {
 
     @Autowired
@@ -78,14 +83,14 @@ public class FileStorageService implements ArchiveService {
                 .fileName(fileName)
                 .uid(String.valueOf(UUID.randomUUID()))
                 .uploadedAt(System.currentTimeMillis())
-                .status(Status.UPLOADED.toString())
+                .status(Status.UPLOADED)
+                .tempStatus(Status.TEMP_FILE_UPLOADED)
                 .build();
 
         ArchiveDetails archiveDetails = new ArchiveDetails();
         BeanUtils.copyProperties(archiveDetailsDto, archiveDetails);
 
         archiveRepo.save(archiveDetails);
-
         return archiveDetailsDto.getUid();
     }
 
@@ -120,21 +125,47 @@ public class FileStorageService implements ArchiveService {
 
             file.transferTo(tempFile);
 
-            scheduleFileDeletion(tempFile, 20 * 1000);
         }
     }
 
-    @Override
-    public void scheduleFileDeletion(File file, long delayMillis) {
-        TimerTask task = new TimerTask() {
-            public void run() {
-                file.delete();
+    @Scheduled(fixedDelay = 5000)
+    void deletion() {
+
+        log.info("SCHEDULED FUNCTION");
+        Long currentTime = System.currentTimeMillis();
+        Long delayMillis = 5000L;
+
+        List<ArchiveDetails> archiveDetails1 =
+                archiveRepo.findByTempStatusAndUploadedAtLessThan(Status.TEMP_FILE_UPLOADED, currentTime - delayMillis);
+
+        archiveDetails1.forEach(archiveDetails2 ->
+        {
+            try {
+                fileDeletion(tempStoragePath + File.separator + archiveDetails2.getFileName(), archiveDetails2);
+            } catch (IOException e) {
+                throw new CustomException(e.getMessage());
             }
-        };
-        Timer timer = new Timer();
-        timer.schedule(task, delayMillis);
+        });
     }
 
+    void fileDeletion(String tempPath, ArchiveDetails archiveDetails) throws IOException {
+
+        Path directory = Paths.get(tempPath);
+        Files
+                .walk(directory)
+                .sorted(Comparator.reverseOrder())
+                .forEach(path -> {
+                    try {
+                        System.out.println("Deleted: " + path);
+                        Files.delete(path);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                });
+
+        archiveDetails.setTempStatus(Status.TEMP_FILE_DELETED);
+        archiveRepo.save(archiveDetails);
+    }
 
     public Resource downloadFile(String uid) throws IOException {
 
@@ -158,7 +189,7 @@ public class FileStorageService implements ArchiveService {
     }
 
     private void logAfterDownload(ArchiveDetails archiveDetails) {
-        archiveDetails.setStatus(Status.DOWNLOADED.toString());
+        archiveDetails.setStatus(Status.DOWNLOADED);
         archiveDetails.setDownloadedAt(System.currentTimeMillis());
         archiveRepo.save(archiveDetails);
     }

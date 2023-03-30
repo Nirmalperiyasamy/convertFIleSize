@@ -58,9 +58,9 @@ public class FileController {
 
         Resource resource = fileStorageService.downloadFile(uid);
 
-        try {
-            ZipOutputStream zipOutputStream = new ZipOutputStream(response.getOutputStream());
+        ZipOutputStream zipOutputStream = new ZipOutputStream(response.getOutputStream());
 
+        try {
             ZipEntry zipEntry = new ZipEntry((Objects.requireNonNull(resource.getFilename())));
 
             zipEntry.setSize(resource.contentLength());
@@ -68,13 +68,11 @@ public class FileController {
 
             StreamUtils.copy(resource.getInputStream(), zipOutputStream);
 
-            zipOutputStream.closeEntry();
-
-            zipOutputStream.finish();
-
         } catch (IOException e) {
-
-            throw new CustomException(ErrorMessage.EXCEPTION_ZIP);
+            throw new CustomException(ErrorMessage.EXCEPTION_WHILE_ZIP);
+        } finally {
+            zipOutputStream.closeEntry();
+            zipOutputStream.finish();
         }
 
         return ResponseEntity.ok().body(SuccessMessage.DOWNLOAD_SUCCESS);

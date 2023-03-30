@@ -1,5 +1,6 @@
 package com.hriday.convertFileSize.dao;
 
+import com.hriday.convertFileSize.utils.Status;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -21,8 +22,11 @@ public class ArchiveDetails {
 
     private String fileName;
 
-    private String status;
+    @Enumerated(EnumType.STRING)
+    private Status status;
 
     private String uid;
+    @Enumerated(EnumType.STRING)
+    private Status tempStatus;
 
 }

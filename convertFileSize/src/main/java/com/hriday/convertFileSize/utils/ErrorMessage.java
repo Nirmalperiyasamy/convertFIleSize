@@ -21,7 +21,7 @@ public enum ErrorMessage {
             return "Issue in reading the file";
         }
     },
-    EXCEPTION_ZIP {
+    EXCEPTION_WHILE_ZIP {
         public String toString() {
             return "some exception while zip";
         }
