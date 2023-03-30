@@ -23,8 +23,7 @@ public class ArchiveDetailsDto {
     private Status status;
 
     private String uid;
-    @Enumerated(EnumType.STRING)
-    private Status tempStatus;
+
 
 
 }

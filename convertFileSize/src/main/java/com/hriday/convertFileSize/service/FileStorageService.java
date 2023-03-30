@@ -1,6 +1,6 @@
 package com.hriday.convertFileSize.service;
 
-import com.hriday.convertFileSize.constValues.Const;
+import com.hriday.convertFileSize.common.Const;
 import com.hriday.convertFileSize.dao.ArchiveDetails;
 import com.hriday.convertFileSize.dto.ArchiveDetailsDto;
 import com.hriday.convertFileSize.exception.CustomException;
@@ -73,7 +73,7 @@ public class FileStorageService implements ArchiveService {
 
         archiveFile.compress(tempFilePath, compressedFilePath);
 
-        return logs(fileNameSep[0]);
+        return logs(fileNameSep[0] + Const.ZIP);
     }
 
     public String logs(String fileName) {
@@ -84,7 +84,6 @@ public class FileStorageService implements ArchiveService {
                 .uid(String.valueOf(UUID.randomUUID()))
                 .uploadedAt(System.currentTimeMillis())
                 .status(Status.UPLOADED)
-                .tempStatus(Status.TEMP_FILE_UPLOADED)
                 .build();
 
         ArchiveDetails archiveDetails = new ArchiveDetails();
@@ -136,12 +135,12 @@ public class FileStorageService implements ArchiveService {
         Long delayMillis = 5000L;
 
         List<ArchiveDetails> archiveDetails1 =
-                archiveRepo.findByTempStatusAndUploadedAtLessThan(Status.TEMP_FILE_UPLOADED, currentTime - delayMillis);
+                archiveRepo.findByStatusAndUploadedAtLessThan(Status.DOWNLOADED, currentTime - delayMillis);
 
         archiveDetails1.forEach(archiveDetails2 ->
         {
             try {
-                fileDeletion(tempStoragePath + File.separator + archiveDetails2.getFileName(), archiveDetails2);
+                fileDeletion(fileStoragePath + File.separator + archiveDetails2.getFileName(), archiveDetails2);
             } catch (IOException e) {
                 throw new CustomException(e.getMessage());
             }
@@ -153,17 +152,14 @@ public class FileStorageService implements ArchiveService {
         Path directory = Paths.get(tempPath);
         Files
                 .walk(directory)
-                .sorted(Comparator.reverseOrder())
                 .forEach(path -> {
                     try {
-                        System.out.println("Deleted: " + path);
                         Files.delete(path);
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
                 });
-
-        archiveDetails.setTempStatus(Status.TEMP_FILE_DELETED);
+        archiveDetails.setStatus(Status.DELETED);
         archiveRepo.save(archiveDetails);
     }
 
@@ -176,15 +172,12 @@ public class FileStorageService implements ArchiveService {
 
         try {
             resource = new UrlResource(path.toUri());
-        } catch (MalformedURLException e) {
-            throw new CustomException(ErrorMessage.NOT_READABLE);
-        }
-
-        if (resource.exists() && resource.isReadable()) {
+            if (!resource.exists() && resource.isReadable()) throw new CustomException(ErrorMessage.FILE_NOT_EXIST);
             logAfterDownload(archiveDetails);
             return resource;
-        } else {
-            throw new CustomException(ErrorMessage.FILE_NOT_EXIST);
+
+        } catch (MalformedURLException e) {
+            throw new CustomException(ErrorMessage.NOT_READABLE);
         }
     }
 

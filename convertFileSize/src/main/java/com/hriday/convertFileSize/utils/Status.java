@@ -6,8 +6,6 @@ public enum Status {
 
     DOWNLOADED,
 
-     TEMP_FILE_UPLOADED,
-
-    TEMP_FILE_DELETED;
+   DELETED;
 
 }

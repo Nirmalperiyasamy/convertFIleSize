@@ -18,7 +18,7 @@ import java.util.Objects;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
-import static com.hriday.convertFileSize.constValues.Const.*;
+import static com.hriday.convertFileSize.common.Const.*;
 
 @RequestMapping(API)
 @RestController

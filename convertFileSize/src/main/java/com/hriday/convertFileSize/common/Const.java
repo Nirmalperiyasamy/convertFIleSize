@@ -1,4 +1,4 @@
-package com.hriday.convertFileSize.constValues;
+package com.hriday.convertFileSize.common;
 
 public class Const {
 
